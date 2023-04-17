@@ -1,3 +1,7 @@
+# Requirement
+
+Install Docker (https://docs.docker.com/get-docker/)
+
 # USPS Passport appointment finder
 
 Usage:
@@ -96,4 +100,14 @@ found 1 appointments
   }
 ]
 getting appointments for 20220228 CAMPBELL
+```
+
+# Change search area
+
+This program expands the search area from the closest 5 USPS Offices to a specified zip code, to additional closeby USPS Offices
+The search area is controlled by the value of "area" in main.js
+
+```
+  //change the value of "area" to search further/closer (recommended 1-3)
+  let area = 2;
 ```
