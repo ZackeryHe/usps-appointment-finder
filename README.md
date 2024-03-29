@@ -104,8 +104,11 @@ getting appointments for 20220228 CAMPBELL
 
 # Change search area
 
-This program expands the search area from the closest 5 USPS Offices to a specified zip code, to additional closeby USPS Offices
-The search area is controlled by the value of "area" in main.js
+This program searches for available USPS passport appointments in a larger area of USPS offices around the specified zip code.
+Modify the "area" value to increase the search area in main.js
+A value of 1 searches for the nearby 5 offices in the specified zip code.
+A value of 2 searches for additional 5 offices from each located office.
+And so on.
 
 ```
   //change the value of "area" to search further/closer (recommended 1-3)
