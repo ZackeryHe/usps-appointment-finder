@@ -56,11 +56,10 @@ function getDates() {
  * @param {*} skip an array that keeps track of locations to skip
  * @returns
  */
-async function getLocations(zip, locations, count, rec, skip) {
-  if (count == rec) {
+async function getLocations(zip, locations, visitedFbdID, rec) {
+  if (rec == 0) {
     return;
   } else {
-    let temp1 = [];
     const resp = await fetch(`${rootURL}/facilityScheduleSearch`, {
       method: "POST",
       headers: headers,
@@ -81,31 +80,13 @@ async function getLocations(zip, locations, count, rec, skip) {
       name: item.name,
       zip: item.address.postalCode,
     }))) {
-      temp1.push(loc);
-    }
-
-    if (count < rec - 1) {
-      const temp = [];
-      for (const loc of temp1) {
-        if (skip.filter((e) => e.name == loc.name).length == 0) {
-          skip.push(loc);
-          temp.push(
-            ...(await getLocations(
-              loc.zip,
-              temp1.slice(),
-              count + 1,
-              rec,
-              skip
-            ))
-          );
-        }
+      if (!visitedFbdID.has(loc.fdbId)) {
+        locations.push(loc);
+        visitedFbdID.add(loc.fdbId);
+        console.log(`found location ${loc.name}`);
+        await getLocations(loc.zip, locations, visitedFbdID, rec - 1);
       }
-      locations.push(...temp);
     }
-    locations.push(...temp1);
-    locations = [...new Map(locations.map((v) => [v.fdbId, v])).values()];
-    console.log("finding locations...");
-    return locations;
   }
 }
 
@@ -139,34 +120,40 @@ async function getAppointments(date, fdbIds) {
 
 async function main(args) {
   let zip = "";
-
-  //change the value of "area" to search further/closer (recommended 1-3)
   let area = 2;
+
   if (args.length < 1) {
-    console.log("Usage: node main.js <zip>");
+    console.log("Usage: node main.js <zip> <size=2>");
     return;
+  } else if (args.length < 2) {
+    console.log("No specified area: Using default size of 2");
+    zip = args[0];
   } else {
     zip = args[0];
+    area = args[1];
   }
 
-  console.info("getting locations ids...");
-  const locations = await getLocations(zip, [], 0, area, []);
+  console.info("searching for offices around your location...");
+  const locations = [];
+  await getLocations(zip, locations, new Set([]), area);
   locations.forEach(function (v) {
     delete v.zip;
   });
-  console.info(`found ${locations.length} locations`);
+
+  console.info(`checking appointments in ${locations.length} locations`);
   const dates = getDates();
   for (let date of dates) {
     for (let location of locations) {
-      console.info(`getting appointments for ${date} ${location.name}`);
+      const parseDate = date.slice(0, 4) + "-" + date.slice(4, 6) + "-" + date.slice(6, 8);
+      console.info(`getting appointments on ${parseDate} at ${location.name}`);
       const appointments = await getAppointments(date, [location.fdbId]);
-      console.info(`found ${appointments.length} appointments`);
+      console.info(`found ${appointments.length} appointments on this day`);
       if (appointments.length > 0) {
-        console.log("found an appointment");
         console.info(appointments);
       }
     }
   }
+  console.log("done");
 }
 
 main(process.argv.slice(2)).catch(console.error);
